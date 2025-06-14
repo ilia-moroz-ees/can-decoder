@@ -1,0 +1,7 @@
+/venv/
+parseCANedge.py
+/test_folder/
+enDAQtoCSV.py
+filterMF4.py
+/.vscode/
+/__pycache__/
