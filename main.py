@@ -5,8 +5,6 @@ from datetime import datetime, timezone
 from dateutil import parser as date_parser
 import argparse
 import sys
-import pytz
-from zoneinfo import ZoneInfo
 
 LOG_LEVEL = 'INFO'
 
@@ -34,10 +32,6 @@ def convert_to_utc(local_time):
 
 def get_filtered_mdfs(mf4_files, start_time, end_time):
     mdfs = [MDF(file, lazy=True) for file in mf4_files]
-
-    for mdf in mdfs:
-        logging.debug(
-            f"File: {mdf.name}, Start Time: {datetime.strptime(str(mdf.start_time), '%Y-%m-%d %H:%M:%S%z').time()}")
 
     # Util function for filtering mdfs
     def is_within_timeframe(mdf):
@@ -88,6 +82,13 @@ def main():
     )
 
     parser.add_argument(
+        "dbc_paths",
+        nargs='+',  # Accept one or more values
+        type=str,
+        help="One or more DBC file paths (space-separated)"
+    )
+
+    parser.add_argument(
         "--start",
         type=parse_datetime,
         required=True,
@@ -100,32 +101,42 @@ def main():
         required=True,
         help="Enter date and time (e.g. '2025-06-16 14:45')"
     )
-    
-    parser.usage = "python main.py <folder> --start <start_time> --end <end_time>"
+
+    parser.add_argument(
+        "--filename",
+        type=str,
+        required=False,
+        help="Decoded file name"
+
+    )
+
+    parser.usage = "python main.py <folder> <dbc_paths...> --start <start_time> --end <end_time> --filename <decoded_filename>"
 
     args = parser.parse_args()
     start_time = convert_to_utc(args.start)
     end_time = convert_to_utc(args.end)
+    decoded_filename = "Decoded.MF4"
 
-    logging.info(f"Adjusted Start Time (UTC): {start_time}")
-    logging.info(f"Adjusted End Time (UTC): {end_time}")
+    if args.filename:
+        decoded_filename = args.filename
 
-    folder = args.folder
-    dbc_paths = ["test_folder\\d65_brightloops.dbc"]
-
-    logging.debug(f"Parsed datetime: {start_time}")
+    folder = Path(args.folder)
+    dbc_paths = map(Path, args.dbc_paths)
 
     mf4_files = [str(file) for file in Path(folder).rglob('*.mf4')]
+    logging.info(f"Number of MF4 files found: {len(mf4_files)}")
+    
     if not mf4_files:
         logging.error("No MF4 files found")
 
     mdfs = get_filtered_mdfs(mf4_files, start_time, end_time)
     logging.info(
-        f"Number of mf4_files found within given timeframe: {len(mdfs)}")
+        f"Number of MF4 files found within given timeframe: {len(mdfs)}")
 
     decoded_mdf = combine_and_decode_mf4(mdfs, dbc_paths)
 
-    decoded_mdf.save(Path.cwd().joinpath("Decoded.MF4"))
+    logging.info(f"Saving decoded file as: {decoded_filename}")
+    decoded_mdf.save(Path.cwd().joinpath(decoded_filename))
 
 
 if __name__ == "__main__":
