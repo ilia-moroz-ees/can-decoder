@@ -5,3 +5,4 @@ enDAQtoCSV.py
 filterMF4.py
 /.vscode/
 /__pycache__/
+*.mf4
