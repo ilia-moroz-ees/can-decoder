@@ -7,6 +7,7 @@ import argparse
 import sys
 
 LOG_LEVEL = 'INFO'
+LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
 
 # Custom datetime parser for flexible formats
 
@@ -31,7 +32,7 @@ def convert_to_utc(local_time):
 
 
 def get_filtered_mdfs(mf4_files, start_time, end_time):
-    mdfs = [MDF(file, lazy=True) for file in mf4_files]
+    mdfs = [MDF(file, process_bus_logging=False) for file in mf4_files]
 
     # Util function for filtering mdfs
     def is_within_timeframe(mdf):
@@ -68,7 +69,7 @@ def combine_and_decode_mf4(mdfs, dbc_paths) -> MDF:
 
 def main():
     logging.basicConfig(
-        format='%(asctime)s - %(levelname)s - %(message)s',
+        format=LOG_FORMAT,
         level=LOG_LEVEL
     )
 
@@ -125,7 +126,7 @@ def main():
 
     mf4_files = [str(file) for file in Path(folder).rglob('*.mf4')]
     logging.info(f"Number of MF4 files found: {len(mf4_files)}")
-    
+
     if not mf4_files:
         logging.error("No MF4 files found")
 
