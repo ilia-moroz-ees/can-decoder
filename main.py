@@ -54,6 +54,9 @@ def combine_and_decode_mf4(mdfs, dbc_paths) -> MDF:
         logging.error("No MF4 files are within the specified region")
         sys.exit(1)
 
+    if not dbc_paths:
+        return combined_mdf
+
     database_files = {
         "CAN": [(i, 0) for i in dbc_paths],  # 0 specifies any bus channel
     }
@@ -83,9 +86,10 @@ def main():
     )
 
     parser.add_argument(
-        "dbc_paths",
+        "--dbc_paths",
         nargs='+',  # Accept one or more values
         type=str,
+        required = False,
         help="One or more DBC file paths (space-separated)"
     )
 
@@ -111,7 +115,7 @@ def main():
 
     )
 
-    parser.usage = "python main.py <folder> <dbc_paths...> --start <start_time> --end <end_time> --filename <decoded_filename>"
+    parser.usage = "python main.py <folder> --dbc_paths <dbc_paths...> --start <start_time> --end <end_time> --filename <decoded_filename>"
 
     args = parser.parse_args()
     start_time = convert_to_utc(args.start)
@@ -122,9 +126,11 @@ def main():
         decoded_filename = args.filename
 
     folder = Path(args.folder)
-    dbc_paths = map(Path, args.dbc_paths)
+    dbc_paths = []
+    if args.dbc_paths:
+        dbc_paths = list(map(Path, args.dbc_paths))
 
-    mf4_files = [str(file) for file in Path(folder).rglob('*.mf4')]
+    mf4_files = [str(file) for file in list(Path(folder).rglob('*.MF4')) + list(Path(folder).rglob('*.mf4'))]
     logging.info(f"Number of MF4 files found: {len(mf4_files)}")
 
     if not mf4_files:
